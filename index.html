@@ -105,6 +105,12 @@ function App(){
   const[h2hB,setH2hB]=React.useState(1);
   const[lastLdr,setLastLdr]=React.useState("");
   const[officialRecs,setOfficialRecs]=React.useState(null);
+  const[intName,setIntName]=React.useState("");
+  const[intEmail,setIntEmail]=React.useState("");
+  const[intWeb,setIntWeb]=React.useState("");
+  const[intBusy,setIntBusy]=React.useState(false);
+  const[intErr,setIntErr]=React.useState("");
+  const[intDone,setIntDone]=React.useState(function(){try{return localStorage.getItem("tl_interest")==="1"}catch(e){return false}});
   const chatRef=React.useRef(null);const skip=React.useRef(false);const prevPC=React.useRef(0);const weekSaved=React.useRef(false);const standingsRef=React.useRef(null);const draftResultsRef=React.useRef(null);
 
   // Colors
@@ -289,6 +295,17 @@ function App(){
   function submitSignup(){if(!adminNow()||!signName.trim()||!signEmail.trim())return;DB.ref("signups2").push({name:signName.trim(),email:signEmail.trim(),leagues:signLeagues,ts:Date.now()});setSignSent(true)}
   function toggleLeague(lg){if(signLeagues.includes(lg))setSignLeagues(signLeagues.filter(function(x){return x!==lg}));else setSignLeagues([].concat(signLeagues,[lg]))}
 
+  function submitInterest(e){
+    e.preventDefault();
+    if(intBusy||intDone)return;
+    if((intWeb||"").trim()){setIntErr("");setIntDone(true);return}
+    var name=(intName||"").trim().slice(0,60);
+    var email=(intEmail||"").trim().toLowerCase().slice(0,120);
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setIntErr("Enter a valid email.");return}
+    setIntBusy(true);setIntErr("");
+    fetch("https://mlbtl26-default-rtdb.firebaseio.com/interest.json",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:name,email:email,site:"fantasymlbtl",ts:{".sv":"timestamp"}})}).then(function(r){if(!r.ok)throw new Error("save");try{localStorage.setItem("tl_interest","1")}catch(err){}setIntDone(true)}).catch(function(){setIntErr("Couldn't save right now. Try again later.")}).then(function(){setIntBusy(false)});
+  }
+
   var tabs=[{id:"standings",l:"Standings"},{id:"rosters",l:"Rosters"},{id:"draft",l:"Draft Room"},{id:"matchup",l:"Matchup"},{id:"rules",l:"Rules"},{id:"future",l:"Future Leagues"}];
   var PREV={"Ben":600,"Rip":581,"Stranger":575,"Andrew":571};
   var proj=getProj();var wst=getWST();var recap=getRecap();var magic=getMagic();
@@ -299,8 +316,9 @@ function App(){
       <div className="hdr" style={{background:"linear-gradient(270deg,#1B2A4A,#0F1D36,#1B2A4A,#243656)",backgroundSize:"400% 400%",animation:"headerShift 12s ease infinite",padding:"16px 32px 12px",position:"relative",overflow:"hidden"}}>
         <div className="hdr-row" style={{display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative"}}>
           <h1 style={{color:"#fff",fontSize:32,fontWeight:900,margin:0,fontFamily:"'Playfair Display',serif"}}>Fantasy MLB Team League <span style={{color:"#C9A84C"}}>2026</span></h1>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
             {(function(){var now=new Date();if(seasonOver(now))return <div style={{background:"#C9A84C22",border:"1px solid #C9A84C66",borderRadius:20,padding:"5px 14px"}}><span style={{fontSize:10,color:"#C9A84C",fontWeight:800,letterSpacing:1}}>2026 Season Final</span></div>;var ss=new Date("2026-03-25"),day=Math.max(1,Math.floor((now-ss)/864e5)+1);return seasonStarted(now)?<div style={{background:"#2E7D3220",border:"1px solid #2E7D3240",borderRadius:20,padding:"5px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:"#2E7D32",animation:"pulse 1.5s infinite"}}/><span style={{fontSize:10,color:"#4CAF50",fontWeight:700,letterSpacing:1}}>LIVE</span><span style={{fontSize:10,color:"#ffffff60"}}>Day {day}</span></div>:null})()}
+            <a href="#interest" style={{color:"#ffffff99",fontSize:11,fontWeight:600,textDecoration:"underline",textUnderlineOffset:3}}>Get updates</a>
             <button onClick={authUser?signOutAdmin:signInGoogle} style={{background:"transparent",color:"#C9A84C",border:"1px solid #C9A84C66",borderRadius:20,padding:"5px 12px",fontSize:10,fontWeight:700,fontFamily:"'Libre Franklin',sans-serif"}}>{authUser?"Sign out":"Sign in with Google"}</button>
           </div>
         </div>
@@ -775,6 +793,26 @@ function App(){
 
       {/* Celebration overlay */}
       {celeb&&<div style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",zIndex:9999,display:"flex",justifyContent:"center",alignItems:"center",background:"rgba(27,42,74,0.85)",animation:"fadeIn 0.3s ease"}} onClick={function(){setCeleb(null)}}><div style={{background:"#fff",borderRadius:16,padding:"32px 48px",textAlign:"center",maxWidth:420,animation:"celebBounce 0.5s ease"}} className="celeb-pad"><img src={LOGOS[celeb.team]||""} alt="" style={{width:100,height:100,objectFit:"contain",marginBottom:16}} onError={function(e){e.target.style.display="none"}}/><div style={{fontSize:12,color:"#6B7280",fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>DRAFTED BY {(celeb.mgr||"").toUpperCase()}</div><div style={{fontSize:28,fontWeight:900,color:"#1B2A4A",fontFamily:"'Playfair Display',serif",marginBottom:16}} className="celeb-title">The {celeb.team}!</div><img src={GIFS[celeb.team]||""} alt="" style={{width:"100%",maxWidth:300,borderRadius:10,marginBottom:12}} onError={function(e){e.target.style.display="none"}}/><div style={{fontSize:10,color:"#CCC",marginTop:4}}>Click anywhere to dismiss</div></div></div>}
+
+      <div style={{maxWidth:440,margin:"0 auto",padding:"8px 16px 20px"}}>
+        <form id="interest" onSubmit={submitInterest} noValidate style={{background:cB,border:"1px solid "+cBd,borderRadius:12,padding:"18px 16px",scrollMarginTop:16}}>
+          <h2 id="interest-title" style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:800,color:Nv,margin:0}}>Want in next season?</h2>
+          <p style={{fontSize:13,color:GYv,lineHeight:1.5,margin:"6px 0 14px"}}>Get updates on new Team League games, the app, and how to join.</p>
+          {intDone?<p style={{fontSize:15,fontWeight:700,color:GRv,margin:0}}>You're on the list. Thanks!</p>:
+          <div>
+            <label htmlFor="interest-name" style={{display:"block",fontSize:11,fontWeight:700,color:Nv,letterSpacing:0.4,marginBottom:6}}>Name <span style={{fontWeight:500,color:GYv}}>(optional)</span></label>
+            <input id="interest-name" name="name" maxLength={60} autoComplete="name" value={intName} onChange={function(e){setIntName(e.target.value)}} style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",border:"1px solid "+iBd,borderRadius:8,fontSize:14,color:Nv,background:iB,marginBottom:12}}/>
+            <label htmlFor="interest-email" style={{display:"block",fontSize:11,fontWeight:700,color:Nv,letterSpacing:0.4,marginBottom:6}}>Email</label>
+            <input id="interest-email" name="email" type="email" required maxLength={120} autoComplete="email" inputMode="email" value={intEmail} onChange={function(e){setIntEmail(e.target.value)}} style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",border:"1px solid "+iBd,borderRadius:8,fontSize:14,color:Nv,background:iB}}/>
+            <div aria-hidden="true" style={{position:"absolute",left:-9999,width:1,height:1,overflow:"hidden"}}>
+              <label htmlFor="interest-website">Website</label>
+              <input id="interest-website" name="website" tabIndex={-1} autoComplete="off" value={intWeb} onChange={function(e){setIntWeb(e.target.value)}}/>
+            </div>
+            {intErr?<p role="alert" style={{fontSize:12,color:RDv,margin:"10px 0 0"}}>{intErr}</p>:null}
+            <button type="submit" disabled={intBusy} style={{width:"100%",marginTop:14,background:intBusy?MGv:Gv,color:intBusy?"#999":"#1B2A4A",border:"none",borderRadius:8,padding:"12px",fontSize:14,fontWeight:800,cursor:intBusy?"default":"pointer"}}>Notify me</button>
+          </div>}
+        </form>
+      </div>
 
       <div style={{textAlign:"center",padding:"12px 0 16px",fontSize:10,color:GYv}}>Fantasy MLB Team League 2026 · $225 Prize Pool · Est. 2025</div>
     </div>
