@@ -37,7 +37,7 @@ input:focus{outline:2px solid var(--G)}button{cursor:pointer}button:active{trans
 <script>
 firebase.initializeApp({apiKey:"AIzaSyC8UvEYET3uXzDNHBuOz_PoQj-pLUFEHDs",authDomain:"mlbtl26.firebaseapp.com",databaseURL:"https://mlbtl26-default-rtdb.firebaseio.com",projectId:"mlbtl26",storageBucket:"mlbtl26.firebasestorage.app",messagingSenderId:"609988607987",appId:"1:609988607987:web:7aaf6f783aad1392995c86"});
 // Replace with Michael's Firebase Auth uid (Authentication → Users) after Google sign-in is enabled.
-var ADMIN_UID="MICHAEL_UID_PLACEHOLDER";
+var ADMIN_UID="cl98lGHlG5Rs4BEaPDaerl1U1QN2";
 var AUTH=firebase.auth();
 var DB=firebase.database(),GAME=DB.ref("game2");
 function adminNow(){var u=AUTH.currentUser;return !!(u&&u.uid&&u.uid===ADMIN_UID)}
